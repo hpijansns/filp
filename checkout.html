@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <div onclick="history.back()" style="font-size: 24px; cursor: pointer;">←</div>
+    <div style="font-size: 18px; font-weight: bold; flex:1; margin-left:15px;">Checkout</div>
+  </div>
+
+  <div class="steps-header">
+    <div class="step active" id="st1"><div class="step-circle">1</div>Address</div>
+    <div class="step" id="st2"><div class="step-circle">2</div>Summary</div>
+    <div class="step"><div class="step-circle">3</div>Payment</div>
+  </div>
+
+  <!-- Step 1: Address Form -->
+  <div id="address-section" class="container">
+    <h3>Delivery Address</h3>
+    <div class="form-group"><input type="text" id="name" placeholder="Full Name"></div>
+    <div class="form-group"><input type="number" id="phone" placeholder="Phone Number"></div>
+    <div class="form-group"><input type="text" id="pin" placeholder="Pincode"></div>
+    <div class="form-group"><textarea id="address" placeholder="House No, Building, Area, City" rows="3"></textarea></div>
+  </div>
+
+  <!-- Step 2: Order Summary (Hidden initially) -->
+  <div id="summary-section" style="display:none;">
+    <div class="container" style="background:#fff3e0;">
+      <h4>Deliver to:</h4>
+      <div id="display-address" style="font-size:14px; line-height:1.5;"></div>
+    </div>
+    <div id="summary-items"></div>
+    <div id="summary-pricing"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <div id="bottom-amt" style="flex:1; padding: 15px; font-size: 20px; font-weight: bold; display:none;"></div>
+    <button class="btn-buy" id="action-btn" onclick="nextStep()" style="width:100%;">Deliver Here</button>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    function nextStep() {
+      let name = document.getElementById('name').value;
+      let phone = document.getElementById('phone').value;
+      let pin = document.getElementById('pin').value;
+      let address = document.getElementById('address').value;
+
+      if(!name || !phone || !pin || !address) return showToast("Please fill all details");
+
+      // Save Address
+      setLS('shippingAddress', { name, phone, pin, address });
+
+      // Switch to Summary View
+      document.getElementById('address-section').style.display = 'none';
+      document.getElementById('summary-section').style.display = 'block';
+      
+      document.getElementById('st1').classList.remove('active');
+      document.getElementById('st2').classList.add('active');
+
+      document.getElementById('display-address').innerHTML = `<b>${name}</b> - ${phone}<br>${address} - ${pin}`;
+      
+      renderSummary();
+      
+      let btn = document.getElementById('action-btn');
+      btn.innerText = "Continue to Payment";
+      btn.onclick = () => location.href = 'payment.html';
+      
+      let bAmt = document.getElementById('bottom-amt');
+      bAmt.style.display = 'block';
+      let totals = getCartTotals();
+      bAmt.innerText = `₹${totals.totalPrice}`;
+    }
+
+    function renderSummary() {
+      let cart = getLS('cart');
+      let products = getLS('products');
+      let html = '';
+      cart.forEach(item => {
+        let p = products.find(x => x.id === item.productId);
+        if(p) {
+          html += `<div class="cart-item"><img src="${p.mainImg}" onerror="imgError(this)"><div><div class="product-title">${p.title}</div><div class="product-price" style="margin-top:5px;">₹${p.price} x ${item.qty}</div></div></div>`;
+        }
+      });
+      document.getElementById('summary-items').innerHTML = html;
+
+      let totals = getCartTotals();
+      document.getElementById('summary-pricing').innerHTML = `
+        <div class="price-details" style="margin-bottom:0;">
+          <h3 style="margin-top:0;">Price Breakdown</h3>
+          <div class="price-row"><span>Total Items</span><span>${totals.items}</span></div>
+          <div class="price-row total"><span>Amount Payable</span><span>₹${totals.totalPrice}</span></div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
