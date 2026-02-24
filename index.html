@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipkart Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">Flipkart</div>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for products, brands and more">
+            <i class="fa fa-search"></i>
+        </div>
+        <div class="header-icons">
+            <div class="cart-icon" onclick="navigateTo('cart')">
+                <i class="fa fa-shopping-cart"></i>
+                <span id="cartCount">0</span>
+            </div>
+            <div class="admin-btn" onclick="navigateTo('admin')">
+                <i class="fa fa-user-shield"></i>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-container">
+        </main>
+
+    <div id="toast" class="toast">Added to cart!</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
