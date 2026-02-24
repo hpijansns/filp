@@ -11,7 +11,6 @@
 <!-- HEADER -->
 
 <div class="header">
-
 <div class="header-logo" onclick="location.href='index.html'">
 <img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100">
 </div>
@@ -19,7 +18,6 @@
 <div class="header-actions">
 <span onclick="location.href='cart.html'">🛒</span>
 </div>
-
 </div>
 
 
@@ -46,9 +44,8 @@
 
 
 
-<!-- SCRIPT -->
-
-<script type="module" src="script.js"></script>
+<!-- FIREBASE SCRIPT -->
+<script type="module" src="./script.js"></script>
 
 <script>
 
@@ -65,11 +62,8 @@ let products = getLS("products",[])
 document.getElementById("categories").innerHTML =
 categories.map(c=>`
 <div class="category-item">
-
 <img src="${c.img}" onerror="imgError(this)">
-
 <span>${c.name}</span>
-
 </div>
 `).join("")
 
@@ -95,13 +89,10 @@ return `
 <div class="product-card">
 
 <a href="product.html?id=${p.id}">
-
 <img src="${p.mainImg}" onerror="imgError(this)">
-
 <div class="product-title">${p.title}</div>
 
 <div>
-
 <span class="product-price">₹${p.price}</span>
 
 ${disc>0 ? `
@@ -110,7 +101,6 @@ ${disc>0 ? `
 `:""}
 
 </div>
-
 </a>
 
 <button class="btn-add" onclick="addToCart('${p.id}')">
@@ -131,12 +121,9 @@ Add to Cart
 renderHome()
 
 
+/* FIREBASE UPDATE LISTENER */
 
-/* WAIT FIREBASE SYNC */
-
-setTimeout(renderHome,1000)
-setTimeout(renderHome,2000)
-setTimeout(renderHome,3000)
+document.addEventListener("dataUpdated", renderHome)
 
 
 
