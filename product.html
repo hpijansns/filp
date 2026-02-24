@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .prod-main-img { width: 100%; max-height: 350px; object-fit: contain; background: white; padding: 20px;}
+    .gallery { display: flex; gap: 10px; padding: 10px; overflow-x: auto; background: white;}
+    .gallery img { width: 60px; height: 60px; border: 1px solid #ddd; border-radius: 4px; object-fit: cover; cursor: pointer; }
+    .prod-details { background: white; padding: 15px; margin-top: 5px; }
+    .desc-images img { width: 100%; display: block; margin-top: 5px;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div onclick="history.back()" style="font-size: 24px; cursor: pointer;">←</div>
+    <div class="header-actions">
+      <span onclick="location.href='cart.html'">🛒</span>
+    </div>
+  </div>
+
+  <div id="product-content"></div>
+
+  <div class="bottom-bar">
+    <button class="btn-cart" onclick="addAndGoCart()">Add to Cart</button>
+    <button class="btn-buy" onclick="buyNow()">Buy Now</button>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    const products = getLS('products');
+    const product = products.find(p => p.id === productId);
+
+    if (!product) {
+      document.body.innerHTML = "<h2 style='text-align:center; padding: 50px;'>Product Not Found</h2>";
+    } else {
+      let disc = calcDiscount(product.mrp, product.price);
+      
+      let galleryHtml = `<img src="${product.mainImg}" onclick="setMainImg(this.src)" onerror="imgError(this)">`;
+      if(product.gallery) {
+        galleryHtml += product.gallery.map(img => `<img src="${img}" onclick="setMainImg(this.src)" onerror="imgError(this)">`).join('');
+      }
+
+      let descHtml = '';
+      if(product.desc) {
+        descHtml = product.desc.map(img => `<img src="${img}" onerror="imgError(this)">`).join('');
+      }
+
+      document.getElementById('product-content').innerHTML = `
+        <img id="mainImage" class="prod-main-img" src="${product.mainImg}" onerror="imgError(this)">
+        <div class="gallery">${galleryHtml}</div>
+        <div class="prod-details">
+          <div style="font-size: 16px;">${product.title}</div>
+          <div style="margin-top: 10px;">
+            <span style="font-size: 24px; font-weight: bold;">₹${product.price}</span>
+            ${disc > 0 ? `<span style="text-decoration:line-through; color:gray; margin-left:10px;">₹${product.mrp}</span> <span style="color:var(--green); font-weight:bold; margin-left:10px;">${disc}% off</span>` : ''}
+          </div>
+          <div style="margin-top: 15px; color: var(--orange); font-weight:bold;">Hurry, Offer ends soon! ⏱ <span id="ptimer">05:22:10</span></div>
+        </div>
+        <div class="desc-images">${descHtml}</div>
+      `;
+    }
+
+    function setMainImg(src) { document.getElementById('mainImage').src = src; }
+
+    function addAndGoCart() {
+      addToCart(productId);
+      showToast('Added to Cart');
+    }
+
+    function buyNow() {
+      // Direct checkout logic: clear cart, add this item, go to checkout
+      setLS('cart', [{ productId: productId, qty: 1 }]);
+      location.href = 'checkout.html';
+    }
+  </script>
+</body>
+</html>
