@@ -1,96 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlipShop</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlipShop</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-logo" onclick="location.href='index.html'">
-      <img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100" alt="Logo">
-    </div>
-    <div class="header-actions">
-      <span onclick="location.href='cart.html'">🛒</span>
-    </div>
-  </div>
-  <div class="search-bar">
-    <input type="text" placeholder="Search for Products, Brands and More...">
-  </div>
+<!-- Header -->
+<div class="header">
+<div class="header-logo" onclick="location.href='index.html'">
+<img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100">
+</div>
 
-  <!-- Categories -->
-  <div class="categories-wrapper" id="categories"></div>
+<div class="header-actions">
+<span onclick="location.href='cart.html'">🛒</span>
+</div>
+</div>
 
-  <!-- Slider -->
-  <div class="slider" id="slider"></div>
+<div class="search-bar">
+<input type="text" placeholder="Search for Products, Brands and More...">
+</div>
 
-  <!-- Deals -->
-  <div class="section-header">
-    <div>Deals of the Day</div>
-    <div class="timer">⏱ <span id="timer">12:00:00</span></div>
-  </div>
+<!-- Categories -->
+<div class="categories-wrapper" id="categories"></div>
 
-  <!-- Products Grid -->
-  <div class="product-grid" id="productsGrid"></div>
+<!-- Slider -->
+<div class="slider" id="slider"></div>
 
-  <script src="script.js"></script>
-  <script>
-    // Load Categories
-    const categories = getLS('categories');
-    const catHtml = categories.map(c => `
-      <div class="category-item">
-        <img src="${c.img}" onerror="imgError(this)">
-        <span>${c.name}</span>
-      </div>
-    `).join('');
-    document.getElementById('categories').innerHTML = catHtml;
+<!-- Deals -->
+<div class="section-header">
+<div>Deals of the Day</div>
+<div class="timer">⏱ <span id="timer">12:00:00</span></div>
+</div>
 
-    // Load Slider
-    const sliders = getLS('sliderImages');
-    const sliderHtml = sliders.map((s, i) => `<img src="${s.url}" class="${i===0?'active':''}" onerror="imgError(this)">`).join('');
-    document.getElementById('slider').innerHTML = sliderHtml;
-    
-    let currentSlide = 0;
-    const slideImgs = document.querySelectorAll('#slider img');
-    if(slideImgs.length > 1) {
-      setInterval(() => {
-        slideImgs[currentSlide].classList.remove('active');
-        currentSlide = (currentSlide + 1) % slideImgs.length;
-        slideImgs[currentSlide].classList.add('active');
-      }, 3000);
-    }
+<!-- Products -->
+<div class="product-grid" id="productsGrid"></div>
 
-    // Timer Logic
-    let time = 12 * 3600;
-    setInterval(() => {
-      let h = Math.floor(time / 3600);
-      let m = Math.floor((time % 3600) / 60);
-      let s = time % 60;
-      document.getElementById('timer').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-      time = time > 0 ? time - 1 : 12 * 3600;
-    }, 1000);
 
-    // Load Products
-    const products = getLS('products');
-    const prodHtml = products.map(p => {
-      let disc = calcDiscount(p.mrp, p.price);
-      return `
-      <div class="product-card">
-        <a href="product.html?id=${p.id}">
-          <img src="${p.mainImg}" onerror="imgError(this)">
-          <div class="product-title">${p.title}</div>
-          <div>
-            <span class="product-price">₹${p.price}</span>
-            ${disc > 0 ? `<span class="product-mrp">₹${p.mrp}</span> <span class="product-discount">${disc}% off</span>` : ''}
-          </div>
-        </a>
-        <button class="btn-add" onclick="addToCart('${p.id}')">Add to Cart</button>
-      </div>`;
-    }).join('');
-    document.getElementById('productsGrid').innerHTML = prodHtml;
-  </script>
+
+<script type="module" src="script.js"></script>
+
+<script>
+
+/* RENDER PAGE */
+
+function renderPage(){
+
+/* CATEGORIES */
+
+const categories = getLS('categories') || [];
+
+document.getElementById('categories').innerHTML =
+categories.map(c=>`
+<div class="category-item">
+<img src="${c.img}" onerror="imgError(this)">
+<span>${c.name}</span>
+</div>
+`).join('');
+
+
+
+/* SLIDER */
+
+const sliders = getLS('sliderImages') || [];
+
+document.getElementById('slider').innerHTML =
+sliders.map((s,i)=>`
+<img src="${s.url}" class="${i===0?'active':''}" onerror="imgError(this)">
+`).join('');
+
+
+
+let currentSlide = 0;
+
+const slideImgs = document.querySelectorAll('#slider img');
+
+if(slideImgs.length>1){
+
+setInterval(()=>{
+
+slideImgs[currentSlide].classList.remove('active')
+
+currentSlide=(currentSlide+1)%slideImgs.length
+
+slideImgs[currentSlide].classList.add('active')
+
+},3000)
+
+}
+
+
+
+/* PRODUCTS */
+
+const products = getLS('products') || [];
+
+document.getElementById('productsGrid').innerHTML =
+products.map(p=>{
+
+let disc = calcDiscount(p.mrp,p.price)
+
+return `
+<div class="product-card">
+
+<a href="product.html?id=${p.id}">
+
+<img src="${p.mainImg}" onerror="imgError(this)">
+
+<div class="product-title">${p.title}</div>
+
+<div>
+
+<span class="product-price">₹${p.price}</span>
+
+${disc>0 ? `<span class="product-mrp">₹${p.mrp}</span>
+<span class="product-discount">${disc}% off</span>`:''}
+
+</div>
+
+</a>
+
+<button class="btn-add" onclick="addToCart('${p.id}')">
+Add to Cart
+</button>
+
+</div>
+`
+
+}).join('')
+
+}
+
+
+
+/* TIMER */
+
+let time = 12 * 3600
+
+setInterval(()=>{
+
+let h = Math.floor(time / 3600)
+let m = Math.floor((time % 3600) / 60)
+let s = time % 60
+
+document.getElementById('timer').innerText =
+`${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`
+
+time = time>0 ? time-1 : 12*3600
+
+},1000)
+
+
+
+/* FIRST RENDER */
+
+renderPage()
+
+
+/* WAIT FIREBASE SYNC */
+
+setTimeout(renderPage,700)
+setTimeout(renderPage,1500)
+setTimeout(renderPage,2500)
+
+
+</script>
+
 </body>
 </html>
