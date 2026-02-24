@@ -1,4 +1,7 @@
-/* FIREBASE IMPORT */
+/* FLIPSHOP - ALL-IN-ONE ENGINE 
+   Supports: GitHub Pages + Firebase Realtime Database
+*/
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getDatabase,
@@ -10,7 +13,7 @@ import {
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* FIREBASE CONFIG */
+/* 1. FIREBASE CONFIG */
 const firebaseConfig = {
     apiKey: "AIzaSyBfA-mFODccLz13nLpFQFI5Q2qBNIS2_KI",
     authDomain: "flipkart-clone-ab903.firebaseapp.com",
@@ -21,105 +24,90 @@ const firebaseConfig = {
     appId: "1:733319152647:web:cb5943fc21d8676bad16a2"
 };
 
-/* INIT */
+/* 2. INITIALIZE FIREBASE */
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* EXPORTS FOR ADMIN PANEL (Making them Global) */
-// इसे window पर डालने से admin.html बिना error के इन्हें use कर पाएगा
-window.fbDB = db;
-window.fbRef = ref;
-window.fbPush = push;
-window.fbSet = set;
-window.fbUpdate = update;
-window.fbRemove = remove;
+/* 3. EXPOSE TO WINDOW (Important for Admin & HTML) */
+// यह एडमिन पैनल को डेटा सेव करने की अनुमति देता है
+window.db = db;
+window.ref = ref;
+window.push = push;
+window.set = set;
+window.update = update;
+window.remove = remove;
 
-/* ----------------------- */
-/* LOCAL STORAGE HELPERS */
-/* ----------------------- */
-window.getLS = function(key, def = null) {
+/* 4. LOCAL STORAGE HELPERS */
+window.getLS = (key, def = []) => {
     try {
-        const val = localStorage.getItem(key);
-        return val ? JSON.parse(val) : def;
-    } catch (e) {
-        return def;
-    }
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : def;
+    } catch (e) { return def; }
 };
 
-window.setLS = function(key, val) {
+window.setLS = (key, val) => {
     localStorage.setItem(key, JSON.stringify(val));
 };
 
-/* ----------------------- */
-/* UTILS */
-/* ----------------------- */
-window.imgError = function(img) {
+/* 5. UTILS */
+window.imgError = (img) => {
     img.src = "https://via.placeholder.com/150?text=No+Image";
 };
 
-window.calcDiscount = function(mrp, price) {
-    mrp = Number(mrp);
-    price = Number(price);
-    if (!mrp || mrp <= price) return 0;
-    return Math.round(((mrp - price) / mrp) * 100);
+window.calcDiscount = (mrp, price) => {
+    const m = parseFloat(mrp);
+    const p = parseFloat(price);
+    if (!m || m <= p) return 0;
+    return Math.round(((m - p) / m) * 100);
 };
 
-/* ----------------------- */
-/* CART SYSTEM */
-/* ----------------------- */
-window.addToCart = function(productId, qty = 1) {
-    let cart = getLS("cart", []);
-    let existing = cart.find(c => c.productId === productId);
-    if (existing) {
-        existing.qty += qty;
-    } else {
-        cart.push({ productId, qty });
-    }
-    setLS("cart", cart);
-    alert("Product added to cart!");
-    document.dispatchEvent(new Event("dataUpdated")); // Update UI count
-};
-
-/* ----------------------- */
-/* FIREBASE REALTIME SYNC */
-/* ----------------------- */
-
+/* 6. REALTIME SYNC ENGINE */
 function notifyUpdate() {
+    // यह इवेंट index.html को रेंडर करने का सिग्नल भेजता है
     document.dispatchEvent(new Event("dataUpdated"));
 }
 
-// Helper to sync Firebase node to LocalStorage
 const syncNode = (nodeName) => {
     onValue(ref(db, nodeName), (snap) => {
-        let arr = [];
+        const arr = [];
         if (snap.exists()) {
-            snap.forEach((child) => {
+            snap.forEach(child => {
                 arr.push({ id: child.key, ...child.val() });
             });
         }
         setLS(nodeName, arr);
         notifyUpdate();
-    }, (error) => {
-        console.error(`Error syncing ${nodeName}:`, error);
-    });
+    }, (err) => console.error(`Sync Error (${nodeName}):`, err));
 };
 
-// Start Syncing
+// Syncing Lists
 syncNode("products");
 syncNode("categories");
 syncNode("sliderImages");
 syncNode("orders");
 
-// Special case for Payment Links (Not an array)
+// Syncing Single Object (Payment Links)
 onValue(ref(db, "paymentLinks"), (snap) => {
-    if (snap.exists()) {
-        setLS("paymentLinks", snap.val());
-        notifyUpdate();
-    }
+    setLS("paymentLinks", snap.exists() ? snap.val() : {});
+    notifyUpdate();
 });
 
-/* ----------------------- */
-/* INITIALIZE */
-/* ----------------------- */
-if (!getLS("cart")) setLS("cart", []);
-console.log("Firebase Sync Initialized 🚀");
+/* 7. CART SYSTEM */
+window.addToCart = (productId, qty = 1) => {
+    let cart = getLS("cart", []);
+    const idx = cart.findIndex(c => c.productId === productId);
+    
+    if (idx > -1) {
+        cart[idx].qty += qty;
+    } else {
+        cart.push({ productId, qty });
+    }
+    
+    setLS("cart", cart);
+    alert("🛒 Product added to cart!");
+    notifyUpdate();
+};
+
+/* 8. STARTUP */
+if (!localStorage.getItem("cart")) setLS("cart", []);
+console.log("🔥 FlipShop System Ready & Firebase Connected!");
