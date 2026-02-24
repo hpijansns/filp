@@ -8,8 +8,10 @@
 </head>
 <body>
 
-<!-- Header -->
+<!-- HEADER -->
+
 <div class="header">
+
 <div class="header-logo" onclick="location.href='index.html'">
 <img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100">
 </div>
@@ -17,25 +19,27 @@
 <div class="header-actions">
 <span onclick="location.href='cart.html'">🛒</span>
 </div>
+
 </div>
+
 
 <div class="search-bar">
 <input type="text" placeholder="Search for Products, Brands and More...">
 </div>
 
-<!-- Categories -->
+
+<!-- CATEGORIES -->
+
 <div class="categories-wrapper" id="categories"></div>
 
-<!-- Slider -->
+
+<!-- SLIDER -->
+
 <div class="slider" id="slider"></div>
 
-<!-- Deals -->
-<div class="section-header">
-<div>Deals of the Day</div>
-<div class="timer">⏱ <span id="timer">12:00:00</span></div>
-</div>
 
-<!-- Products -->
+<!-- PRODUCTS -->
+
 <div class="product-grid" id="productsGrid"></div>
 
 
@@ -44,60 +48,39 @@
 
 <script>
 
-/* RENDER PAGE */
 
-function renderPage(){
+function renderHome(){
+
+let categories = getLS("categories",[])
+let sliders = getLS("sliderImages",[])
+let products = getLS("products",[])
+
+
 
 /* CATEGORIES */
 
-const categories = getLS('categories') || [];
-
-document.getElementById('categories').innerHTML =
+document.getElementById("categories").innerHTML =
 categories.map(c=>`
 <div class="category-item">
 <img src="${c.img}" onerror="imgError(this)">
 <span>${c.name}</span>
 </div>
-`).join('');
+`).join("")
 
 
 
 /* SLIDER */
 
-const sliders = getLS('sliderImages') || [];
-
-document.getElementById('slider').innerHTML =
+document.getElementById("slider").innerHTML =
 sliders.map((s,i)=>`
 <img src="${s.url}" class="${i===0?'active':''}" onerror="imgError(this)">
-`).join('');
-
-
-
-let currentSlide = 0;
-
-const slideImgs = document.querySelectorAll('#slider img');
-
-if(slideImgs.length>1){
-
-setInterval(()=>{
-
-slideImgs[currentSlide].classList.remove('active')
-
-currentSlide=(currentSlide+1)%slideImgs.length
-
-slideImgs[currentSlide].classList.add('active')
-
-},3000)
-
-}
+`).join("")
 
 
 
 /* PRODUCTS */
 
-const products = getLS('products') || [];
-
-document.getElementById('productsGrid').innerHTML =
+document.getElementById("productsGrid").innerHTML =
 products.map(p=>{
 
 let disc = calcDiscount(p.mrp,p.price)
@@ -115,8 +98,10 @@ return `
 
 <span class="product-price">₹${p.price}</span>
 
-${disc>0 ? `<span class="product-mrp">₹${p.mrp}</span>
-<span class="product-discount">${disc}% off</span>`:''}
+${disc>0 ? `
+<span class="product-mrp">₹${p.mrp}</span>
+<span class="product-discount">${disc}% off</span>
+`:""}
 
 </div>
 
@@ -129,41 +114,46 @@ Add to Cart
 </div>
 `
 
-}).join('')
+}).join("")
 
 }
 
 
 
-/* TIMER */
-
-let time = 12 * 3600
-
-setInterval(()=>{
-
-let h = Math.floor(time / 3600)
-let m = Math.floor((time % 3600) / 60)
-let s = time % 60
-
-document.getElementById('timer').innerText =
-`${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`
-
-time = time>0 ? time-1 : 12*3600
-
-},1000)
-
-
-
 /* FIRST RENDER */
 
-renderPage()
+renderHome()
+
 
 
 /* WAIT FIREBASE SYNC */
 
-setTimeout(renderPage,700)
-setTimeout(renderPage,1500)
-setTimeout(renderPage,2500)
+setTimeout(renderHome,800)
+setTimeout(renderHome,1500)
+setTimeout(renderHome,2500)
+
+
+
+/* AUTO SLIDER */
+
+setInterval(()=>{
+
+let slides = document.querySelectorAll("#slider img")
+
+if(slides.length < 2) return
+
+let active = document.querySelector("#slider img.active")
+
+let index = Array.from(slides).indexOf(active)
+
+slides[index].classList.remove("active")
+
+let next = (index+1) % slides.length
+
+slides[next].classList.add("active")
+
+},3000)
+
 
 
 </script>
