@@ -1,152 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FlipShop</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlipShop | Online Shopping</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- HEADER -->
-
 <div class="header">
-<div class="header-logo" onclick="location.href='index.html'">
-<img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100">
+    <div class="header-logo" onclick="location.href='index.html'">
+        <img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100" alt="Logo">
+    </div>
+    <div class="header-actions">
+        <span onclick="location.href='cart.html'" style="cursor:pointer; font-size: 24px;">🛒 <span id="cartCount">0</span></span>
+    </div>
 </div>
-
-<div class="header-actions">
-<span onclick="location.href='cart.html'">🛒</span>
-</div>
-</div>
-
-
-<!-- SEARCH -->
 
 <div class="search-bar">
-<input type="text" placeholder="Search for Products, Brands and More...">
+    <input type="text" id="searchInput" placeholder="Search for Products, Brands and More...">
 </div>
 
+<div class="categories-wrapper" id="categories">
+    <p>Loading categories...</p>
+</div>
 
-<!-- CATEGORIES -->
+<div class="slider-container">
+    <div class="slider" id="slider"></div>
+</div>
 
-<div class="categories-wrapper" id="categories"></div>
+<div class="section-title">✨ Top Deals</div>
+<div class="product-grid" id="productsGrid">
+    <p>Fetching products...</p>
+</div>
 
-
-<!-- SLIDER -->
-
-<div class="slider" id="slider"></div>
-
-
-<!-- PRODUCTS -->
-
-<div class="product-grid" id="productsGrid"></div>
-
-
-
-<!-- FIREBASE SCRIPT -->
 <script type="module" src="./script.js"></script>
 
 <script>
+    // हेल्पर फंक्शन्स (अगर script.js में नहीं हैं तो)
+    const getLS = (key, def) => JSON.parse(localStorage.getItem(key)) || def;
+    const calcDiscount = (mrp, price) => Math.round(((mrp - price) / mrp) * 100);
 
-function renderHome(){
+    function renderHome() {
+        const categories = getLS("categories", []);
+        const sliders = getLS("sliderImages", []);
+        const products = getLS("products", []);
 
-let categories = getLS("categories",[])
-let sliders = getLS("sliderImages",[])
-let products = getLS("products",[])
+        // 1. Render Categories
+        const catElem = document.getElementById("categories");
+        if (categories.length > 0) {
+            catElem.innerHTML = categories.map(c => `
+                <div class="category-item">
+                    <img src="${c.img}" onerror="this.src='https://via.placeholder.com/50'">
+                    <span>${c.name}</span>
+                </div>
+            `).join("");
+        }
 
+        // 2. Render Slider
+        const sliderElem = document.getElementById("slider");
+        if (sliders.length > 0) {
+            sliderElem.innerHTML = sliders.map((s, i) => `
+                <img src="${s.url}" class="${i === 0 ? 'active' : ''}" onerror="this.style.display='none'">
+            `).join("");
+        }
 
+        // 3. Render Products
+        const prodGrid = document.getElementById("productsGrid");
+        if (products.length > 0) {
+            prodGrid.innerHTML = products.map(p => {
+                const disc = calcDiscount(p.mrp, p.price);
+                return `
+                <div class="product-card">
+                    <a href="product.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+                        <img src="${p.mainImg}" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                        <div class="product-title">${p.title}</div>
+                        <div class="price-row">
+                            <span class="product-price">₹${p.price}</span>
+                            ${disc > 0 ? `<span class="product-mrp">₹${p.mrp}</span><span class="product-discount">${disc}% off</span>` : ""}
+                        </div>
+                    </a>
+                    <button class="btn-add" onclick="addToCart('${p.id}')">Add to Cart</button>
+                </div>`;
+            }).join("");
+        } else {
+            prodGrid.innerHTML = "<p>No products found.</p>";
+        }
+    }
 
-/* CATEGORIES */
+    // Firebase से डेटा अपडेट होने पर ही रेंडर करें
+    document.addEventListener("dataUpdated", () => {
+        console.log("Data received from Firebase, rendering...");
+        renderHome();
+    });
 
-document.getElementById("categories").innerHTML =
-categories.map(c=>`
-<div class="category-item">
-<img src="${c.img}" onerror="imgError(this)">
-<span>${c.name}</span>
-</div>
-`).join("")
+    // Initial load check
+    window.onload = renderHome;
 
-
-
-/* SLIDER */
-
-document.getElementById("slider").innerHTML =
-sliders.map((s,i)=>`
-<img src="${s.url}" class="${i===0?'active':''}" onerror="imgError(this)">
-`).join("")
-
-
-
-/* PRODUCTS */
-
-document.getElementById("productsGrid").innerHTML =
-products.map(p=>{
-
-let disc = calcDiscount(p.mrp,p.price)
-
-return `
-<div class="product-card">
-
-<a href="product.html?id=${p.id}">
-<img src="${p.mainImg}" onerror="imgError(this)">
-<div class="product-title">${p.title}</div>
-
-<div>
-<span class="product-price">₹${p.price}</span>
-
-${disc>0 ? `
-<span class="product-mrp">₹${p.mrp}</span>
-<span class="product-discount">${disc}% off</span>
-`:""}
-
-</div>
-</a>
-
-<button class="btn-add" onclick="addToCart('${p.id}')">
-Add to Cart
-</button>
-
-</div>
-`
-
-}).join("")
-
-}
-
-
-
-/* FIRST LOAD */
-
-renderHome()
-
-
-/* FIREBASE UPDATE LISTENER */
-
-document.addEventListener("dataUpdated", renderHome)
-
-
-
-/* AUTO SLIDER */
-
-setInterval(()=>{
-
-let slides = document.querySelectorAll("#slider img")
-
-if(slides.length < 2) return
-
-let active = document.querySelector("#slider img.active")
-
-let index = Array.from(slides).indexOf(active)
-
-slides[index].classList.remove("active")
-
-let next = (index+1) % slides.length
-
-slides[next].classList.add("active")
-
-},3000)
-
+    // Slider Logic
+    setInterval(() => {
+        const slides = document.querySelectorAll("#slider img");
+        if (slides.length < 2) return;
+        const active = document.querySelector("#slider img.active");
+        if (!active) { slides[0].classList.add("active"); return; }
+        
+        let index = Array.from(slides).indexOf(active);
+        active.classList.remove("active");
+        let next = (index + 1) % slides.length;
+        slides[next].classList.add("active");
+    }, 4000);
 </script>
 
 </body>
