@@ -5,6 +5,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FlipShop</title>
 <link rel="stylesheet" href="style.css">
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f1f3f6;
+}
+
+/* HEADER */
+
+.header{
+background:#2874f0;
+color:white;
+display:flex;
+align-items:center;
+padding:12px;
+}
+
+.header-logo{
+font-weight:bold;
+font-size:18px;
+flex:1;
+}
+
+.header-actions{
+font-size:22px;
+cursor:pointer;
+}
+
+/* SEARCH */
+
+.search-bar{
+background:#2874f0;
+padding:10px;
+}
+
+.search-bar input{
+width:100%;
+padding:10px;
+border-radius:4px;
+border:none;
+}
+
+/* CATEGORIES */
+
+.categories-wrapper{
+display:flex;
+overflow-x:auto;
+background:white;
+padding:10px;
+gap:15px;
+}
+
+.category-item{
+text-align:center;
+font-size:12px;
+min-width:70px;
+}
+
+.category-item img{
+width:50px;
+height:50px;
+object-fit:contain;
+}
+
+/* SLIDER */
+
+.slider{
+background:white;
+margin-top:8px;
+}
+
+.slider img{
+width:100%;
+display:none;
+}
+
+.slider img.active{
+display:block;
+}
+
+/* PRODUCTS */
+
+.product-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:8px;
+padding:8px;
+}
+
+.product-card{
+background:white;
+padding:10px;
+border-radius:4px;
+}
+
+.product-card img{
+width:100%;
+height:140px;
+object-fit:contain;
+}
+
+.product-title{
+font-size:14px;
+margin-top:5px;
+}
+
+.product-price{
+font-weight:bold;
+}
+
+.btn-add{
+background:#ff9f00;
+border:none;
+color:white;
+padding:8px;
+width:100%;
+margin-top:8px;
+border-radius:4px;
+}
+
+</style>
+
 </head>
 <body>
 
@@ -12,12 +136,12 @@
 
 <div class="header">
 
-<div class="header-logo" onclick="location.href='index.html'">
-<img src="https://static-assets-web.flixcart.com/batman-returns/batman-returns/p/images/fkheaderlogo_exploreplus-44005d.svg" width="100">
+<div class="header-logo">
+FlipShop
 </div>
 
-<div class="header-actions">
-<span onclick="location.href='cart.html'">🛒</span>
+<div class="header-actions" onclick="location.href='cart.html'">
+🛒
 </div>
 
 </div>
@@ -48,9 +172,10 @@
 
 <!-- SCRIPT -->
 
-<script type="module" src="script.js"></script>
+<script type="module" src="./script.js"></script>
 
 <script>
+
 
 function renderHome(){
 
@@ -65,11 +190,8 @@ let products = getLS("products",[])
 document.getElementById("categories").innerHTML =
 categories.map(c=>`
 <div class="category-item">
-
 <img src="${c.img}" onerror="imgError(this)">
-
-<span>${c.name}</span>
-
+<div>${c.name}</div>
 </div>
 `).join("")
 
@@ -79,7 +201,7 @@ categories.map(c=>`
 
 document.getElementById("slider").innerHTML =
 sliders.map((s,i)=>`
-<img src="${s.url}" class="${i===0?'active':''}" onerror="imgError(this)">
+<img src="${s.url}" class="${i===0?'active':''}">
 `).join("")
 
 
@@ -87,11 +209,7 @@ sliders.map((s,i)=>`
 /* PRODUCTS */
 
 document.getElementById("productsGrid").innerHTML =
-products.map(p=>{
-
-let disc = calcDiscount(p.mrp,p.price)
-
-return `
+products.map(p=>`
 <div class="product-card">
 
 <a href="product.html?id=${p.id}">
@@ -100,16 +218,7 @@ return `
 
 <div class="product-title">${p.title}</div>
 
-<div>
-
-<span class="product-price">₹${p.price}</span>
-
-${disc>0 ? `
-<span class="product-mrp">₹${p.mrp}</span>
-<span class="product-discount">${disc}% off</span>
-`:""}
-
-</div>
+<div class="product-price">₹${p.price}</div>
 
 </a>
 
@@ -118,12 +227,9 @@ Add to Cart
 </button>
 
 </div>
-`
-
-}).join("")
+`).join("")
 
 }
-
 
 
 /* FIRST LOAD */
@@ -131,8 +237,7 @@ Add to Cart
 renderHome()
 
 
-
-/* WAIT FIREBASE SYNC */
+/* WAIT FIREBASE */
 
 setTimeout(renderHome,1000)
 setTimeout(renderHome,2000)
@@ -144,17 +249,17 @@ setTimeout(renderHome,3000)
 
 setInterval(()=>{
 
-let slides = document.querySelectorAll("#slider img")
+let slides=document.querySelectorAll("#slider img")
 
-if(slides.length < 2) return
+if(slides.length<2) return
 
-let active = document.querySelector("#slider img.active")
+let active=document.querySelector("#slider img.active")
 
-let index = Array.from(slides).indexOf(active)
+let index=[...slides].indexOf(active)
 
 slides[index].classList.remove("active")
 
-let next = (index+1) % slides.length
+let next=(index+1)%slides.length
 
 slides[next].classList.add("active")
 
