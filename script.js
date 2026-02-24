@@ -25,31 +25,27 @@ appId: "1:733319152647:web:cb5943fc21d8676bad16a2"
 };
 
 
-/* INITIALIZE */
+/* INIT */
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 
-/* EXPORTS (Admin panel use karega) */
+/* EXPORTS (ADMIN PANEL USE KAREGA) */
 
 export { db, ref, push, set, update, remove, onValue };
 
 
-/* ----------------------------- */
+/* ----------------------- */
 /* LOCAL STORAGE HELPERS */
-/* ----------------------------- */
+/* ----------------------- */
 
 window.getLS = function(key, def = null){
 
 try{
-
 return JSON.parse(localStorage.getItem(key)) || def
-
 }catch{
-
 return def
-
 }
 
 }
@@ -61,9 +57,9 @@ localStorage.setItem(key,JSON.stringify(val))
 }
 
 
-/* ----------------------------- */
+/* ----------------------- */
 /* IMAGE FALLBACK */
-/* ----------------------------- */
+/* ----------------------- */
 
 window.imgError = function(img){
 
@@ -72,9 +68,9 @@ img.src = "https://via.placeholder.com/150?text=No+Image"
 }
 
 
-/* ----------------------------- */
+/* ----------------------- */
 /* DISCOUNT */
-/* ----------------------------- */
+/* ----------------------- */
 
 window.calcDiscount = function(mrp,price){
 
@@ -85,9 +81,9 @@ return Math.round(((mrp - price) / mrp) * 100)
 }
 
 
-/* ----------------------------- */
-/* CART */
-/* ----------------------------- */
+/* ----------------------- */
+/* CART SYSTEM */
+/* ----------------------- */
 
 window.addToCart = function(productId, qty = 1){
 
@@ -96,13 +92,9 @@ let cart = getLS("cart", [])
 let existing = cart.find(c => c.productId === productId)
 
 if(existing){
-
 existing.qty += qty
-
 }else{
-
 cart.push({productId, qty})
-
 }
 
 setLS("cart", cart)
@@ -141,9 +133,18 @@ discount: totalMrp - totalPrice
 }
 
 
-/* ----------------------------- */
-/* REALTIME FIREBASE SYNC */
-/* ----------------------------- */
+/* ----------------------- */
+/* GLOBAL UPDATE EVENT */
+/* ----------------------- */
+
+function notifyUpdate(){
+document.dispatchEvent(new Event("dataUpdated"))
+}
+
+
+/* ----------------------- */
+/* FIREBASE REALTIME SYNC */
+/* ----------------------- */
 
 
 /* PRODUCTS */
@@ -153,15 +154,15 @@ onValue(ref(db,"products"), snap=>{
 let arr=[]
 
 snap.forEach(item=>{
-
 arr.push({
 id:item.key,
 ...item.val()
 })
-
 })
 
 setLS("products",arr)
+
+notifyUpdate()
 
 })
 
@@ -173,15 +174,15 @@ onValue(ref(db,"categories"), snap=>{
 let arr=[]
 
 snap.forEach(item=>{
-
 arr.push({
 id:item.key,
 ...item.val()
 })
-
 })
 
 setLS("categories",arr)
+
+notifyUpdate()
 
 })
 
@@ -193,24 +194,26 @@ onValue(ref(db,"sliderImages"), snap=>{
 let arr=[]
 
 snap.forEach(item=>{
-
 arr.push({
 id:item.key,
 ...item.val()
 })
-
 })
 
 setLS("sliderImages",arr)
 
+notifyUpdate()
+
 })
 
 
-/* PAYMENTS */
+/* PAYMENT LINKS */
 
 onValue(ref(db,"paymentLinks"), snap=>{
 
 setLS("paymentLinks",snap.val())
+
+notifyUpdate()
 
 })
 
@@ -222,22 +225,22 @@ onValue(ref(db,"orders"), snap=>{
 let arr=[]
 
 snap.forEach(item=>{
-
 arr.push({
 id:item.key,
 ...item.val()
 })
-
 })
 
 setLS("orders",arr)
 
+notifyUpdate()
+
 })
 
 
-/* ----------------------------- */
+/* ----------------------- */
 /* PLACE ORDER */
-/* ----------------------------- */
+/* ----------------------- */
 
 window.placeOrder = function(orderData){
 
@@ -246,10 +249,10 @@ push(ref(db,"orders"), orderData)
 }
 
 
-/* ----------------------------- */
+/* ----------------------- */
 /* INIT */
-/* ----------------------------- */
+/* ----------------------- */
 
 if(!getLS("cart")){
 setLS("cart",[])
-  }
+}
