@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cart</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <div onclick="history.back()" style="font-size: 24px; cursor: pointer;">←</div>
+    <div style="font-size: 18px; font-weight: bold; flex:1; margin-left:15px;">My Cart</div>
+  </div>
+
+  <div id="cart-items"></div>
+  <div id="cart-pricing"></div>
+
+  <div class="bottom-bar" id="cart-bottom" style="display:none;">
+    <div style="flex:1; padding: 10px 15px; font-size: 20px; font-weight: bold; align-self: center;" id="bottom-total"></div>
+    <button class="btn-buy" onclick="location.href='checkout.html'" style="flex:1;">Place Order</button>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    function renderCart() {
+      let cart = getLS('cart');
+      let products = getLS('products');
+      let itemsContainer = document.getElementById('cart-items');
+      let pricingContainer = document.getElementById('cart-pricing');
+      let bottomBar = document.getElementById('cart-bottom');
+
+      if (cart.length === 0) {
+        itemsContainer.innerHTML = `<div style="text-align:center; padding: 50px; background:white;"><h3>Your Cart is Empty</h3><br><button class="btn-success" onclick="location.href='index.html'">Shop Now</button></div>`;
+        pricingContainer.innerHTML = '';
+        bottomBar.style.display = 'none';
+        return;
+      }
+
+      let html = '';
+      cart.forEach((item, index) => {
+        let p = products.find(x => x.id === item.productId);
+        if(p) {
+          html += `
+            <div class="cart-item">
+              <img src="${p.mainImg}" onerror="imgError(this)">
+              <div style="flex:1;">
+                <div class="product-title" style="font-size: 15px;">${p.title}</div>
+                <div style="margin-top:5px;">
+                  <span class="product-price">₹${p.price}</span>
+                  <span class="product-mrp">₹${p.mrp||p.price}</span>
+                </div>
+                <div class="cart-qty">
+                  <div class="qty-btn" onclick="updateQty(${index}, -1)">-</div>
+                  <div style="font-weight:bold;">${item.qty}</div>
+                  <div class="qty-btn" onclick="updateQty(${index}, 1)">+</div>
+                  <div style="color:var(--blue); font-weight:bold; cursor:pointer; margin-left:auto;" onclick="removeItem(${index})">Remove</div>
+                </div>
+              </div>
+            </div>`;
+        }
+      });
+      itemsContainer.innerHTML = html;
+
+      let totals = getCartTotals();
+      pricingContainer.innerHTML = `
+        <div class="price-details">
+          <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px; color:var(--gray);">Price Details</h3>
+          <div class="price-row"><span>Price (${totals.items} items)</span><span>₹${totals.totalMrp}</span></div>
+          <div class="price-row"><span>Discount</span><span style="color:var(--green);">- ₹${totals.discount}</span></div>
+          <div class="price-row"><span>Delivery Charges</span><span style="color:var(--green);">FREE</span></div>
+          <div class="price-row total"><span>Total Amount</span><span>₹${totals.totalPrice}</span></div>
+          <div style="color:var(--green); font-weight:bold; font-size:14px; margin-top:10px;">You will save ₹${totals.discount} on this order</div>
+        </div>
+      `;
+      
+      bottomBar.style.display = 'flex';
+      document.getElementById('bottom-total').innerText = `₹${totals.totalPrice}`;
+    }
+
+    function updateQty(index, change) {
+      let cart = getLS('cart');
+      cart[index].qty += change;
+      if (cart[index].qty < 1) cart[index].qty = 1;
+      setLS('cart', cart);
+      renderCart();
+    }
+
+    function removeItem(index) {
+      let cart = getLS('cart');
+      cart.splice(index, 1);
+      setLS('cart', cart);
+      renderCart();
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>
