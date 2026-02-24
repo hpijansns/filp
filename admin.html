@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #f5f5f5; padding-bottom: 20px;}
+    .nav-tabs { display: flex; background: white; border-bottom: 2px solid #ddd; overflow-x: auto; scrollbar-width: none;}
+    .tab { padding: 15px 20px; cursor: pointer; font-weight: bold; color: var(--gray); white-space: nowrap;}
+    .tab.active { color: var(--blue); border-bottom: 3px solid var(--blue); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-header">Control Panel</div>
+
+  <div class="nav-tabs">
+    <div class="tab active" onclick="switchTab(this, 't-products')">Products</div>
+    <div class="tab" onclick="switchTab(this, 't-cats')">Categories</div>
+    <div class="tab" onclick="switchTab(this, 't-sliders')">Sliders</div>
+    <div class="tab" onclick="switchTab(this, 't-payments')">Payments</div>
+    <div class="tab" onclick="switchTab(this, 't-orders')">Orders</div>
+  </div>
+
+  <!-- PRODUCTS MANAGER -->
+  <div id="t-products" class="tab-content active">
+    <div class="admin-section">
+      <h3>Add New Product</h3>
+      <div class="form-group"><input type="text" id="pTitle" placeholder="Product Title"></div>
+      <div class="form-group" style="display:flex; gap:10px;">
+        <input type="number" id="pPrice" placeholder="Selling Price">
+        <input type="number" id="pMrp" placeholder="MRP">
+      </div>
+      <div class="form-group" style="display:flex; gap:10px;">
+        <input type="text" id="pCat" placeholder="Category Name">
+        <input type="number" id="pStock" placeholder="Stock Qty">
+      </div>
+      <div class="form-group"><input type="text" id="pImg" placeholder="Main Image URL"></div>
+      <div class="form-group"><textarea id="pGal" placeholder="Gallery Images URLs (comma separated)"></textarea></div>
+      <div class="form-group"><textarea id="pDesc" placeholder="Description Images URLs (comma separated)"></textarea></div>
+      <button class="btn-success" onclick="addProduct()">Save Product</button>
+    </div>
+    <div class="admin-section" id="admin-products-list"></div>
+  </div>
+
+  <!-- CATEGORY MANAGER -->
+  <div id="t-cats" class="tab-content">
+    <div class="admin-section">
+      <h3>Add Category</h3>
+      <div class="form-group"><input type="text" id="cName" placeholder="Category Name"></div>
+      <div class="form-group"><input type="text" id="cImg" placeholder="Image URL"></div>
+      <button class="btn-success" onclick="addCategory()">Add Category</button>
+    </div>
+    <div class="admin-section" id="admin-cat-list"></div>
+  </div>
+
+  <!-- SLIDER MANAGER -->
+  <div id="t-sliders" class="tab-content">
+    <div class="admin-section">
+      <h3>Add Slider Image</h3>
+      <div class="form-group"><input type="text" id="sImg" placeholder="Slider Image URL"></div>
+      <button class="btn-success" onclick="addSlider()">Add Slider</button>
+    </div>
+    <div class="admin-section" id="admin-slider-list"></div>
+  </div>
+
+  <!-- PAYMENT SETTINGS -->
+  <div id="t-payments" class="tab-content">
+    <div class="admin-section">
+      <h3>UPI Payment Links</h3>
+      <p style="font-size:12px; color:var(--gray);">Format: upi://pay?pa=yourvpa@upi&pn=Name</p>
+      <div class="form-group"><label>Google Pay</label><input type="text" id="payGpay"></div>
+      <div class="form-group"><label>PhonePe</label><input type="text" id="payPhonepe"></div>
+      <div class="form-group"><label>Paytm</label><input type="text" id="payPaytm"></div>
+      <button class="btn-success" onclick="savePayments()">Save Links</button>
+    </div>
+  </div>
+
+  <!-- ORDERS MANAGER -->
+  <div id="t-orders" class="tab-content">
+    <div class="admin-section" id="admin-order-list"></div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    function switchTab(el, id) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
+
+    // -- PRODUCTS --
+    function renderProducts() {
+      let p = getLS('products');
+      let html = p.map((x, i) => `
+        <div class="data-row">
+          <img src="${x.mainImg}" width="40" height="40" style="object-fit:cover;">
+          <div style="flex:1; margin:0 10px; font-size:13px;"><b>${x.title}</b><br>₹${x.price}</div>
+          <button class="btn-danger" onclick="deleteItem('products', ${i}, renderProducts)">Del</button>
+        </div>
+      `).join('');
+      document.getElementById('admin-products-list').innerHTML = html;
+    }
+    function addProduct() {
+      let title = document.getElementById('pTitle').value;
+      let price = document.getElementById('pPrice').value;
+      if(!title || !price) return alert("Title and Price required");
+      
+      let p = getLS('products');
+      p.unshift({
+        id: 'P' + Date.now(), title, price,
+        mrp: document.getElementById('pMrp').value,
+        category: document.getElementById('pCat').value,
+        stock: document.getElementById('pStock').value,
+        mainImg: document.getElementById('pImg').value,
+        gallery: document.getElementById('pGal').value.split(',').map(s=>s.trim()).filter(s=>s),
+        desc: document.getElementById('pDesc').value.split(',').map(s=>s.trim()).filter(s=>s)
+      });
+      setLS('products', p);
+      alert('Product Added');
+      renderProducts();
+    }
+
+    // -- CATEGORIES --
+    function renderCats() {
+      let c = getLS('categories');
+      let html = c.map((x, i) => `
+        <div class="data-row">
+          <img src="${x.img}" width="40" height="40" style="border-radius:50%;">
+          <div style="flex:1; margin-left:10px;">${x.name}</div>
+          <button class="btn-danger" onclick="deleteItem('categories', ${i}, renderCats)">Del</button>
+        </div>
+      `).join('');
+      document.getElementById('admin-cat-list').innerHTML = html;
+    }
+    function addCategory() {
+      let name = document.getElementById('cName').value;
+      let img = document.getElementById('cImg').value;
+      if(!name) return alert("Name required");
+      let c = getLS('categories');
+      c.push({ id: 'C'+Date.now(), name, img });
+      setLS('categories', c);
+      renderCats();
+    }
+
+    // -- SLIDERS --
+    function renderSliders() {
+      let s = getLS('sliderImages');
+      let html = s.map((x, i) => `
+        <div class="data-row">
+          <img src="${x.url}" height="40" style="flex:1; object-fit:cover; margin-right:10px;">
+          <button class="btn-danger" onclick="deleteItem('sliderImages', ${i}, renderSliders)">Del</button>
+        </div>
+      `).join('');
+      document.getElementById('admin-slider-list').innerHTML = html;
+    }
+    function addSlider() {
+      let url = document.getElementById('sImg').value;
+      if(!url) return;
+      let s = getLS('sliderImages');
+      s.push({ id: 'S'+Date.now(), url });
+      setLS('sliderImages', s);
+      renderSliders();
+    }
+
+    // -- PAYMENTS --
+    function loadPayments() {
+      let links = getLS('paymentLinks');
+      document.getElementById('payGpay').value = links.gpay || '';
+      document.getElementById('payPhonepe').value = links.phonepe || '';
+      document.getElementById('payPaytm').value = links.paytm || '';
+    }
+    function savePayments() {
+      setLS('paymentLinks', {
+        gpay: document.getElementById('payGpay').value,
+        phonepe: document.getElementById('payPhonepe').value,
+        paytm: document.getElementById('payPaytm').value
+      });
+      alert('Payment links saved');
+    }
+
+    // -- ORDERS --
+    function renderOrders() {
+      let orders = getLS('orders');
+      let html = '';
+      if(orders.length===0) html="<p>No orders yet.</p>";
+      orders.forEach((o, i) => {
+        let itemsStr = o.items.map(x => `${x.qty}x Prod_${x.productId}`).join(', ');
+        html += `
+          <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:4px;">
+            <b>ID:</b> ${o.id} <span style="float:right; color:var(--gray); font-size:12px;">${o.date}</span><br>
+            <div style="font-size:13px; margin:5px 0;">
+              <b>Customer:</b> ${o.address.name} (${o.address.phone})<br>
+              <b>Items:</b> ${itemsStr}<br>
+              <b>Total:</b> ₹${o.total} (${o.method})
+            </div>
+            <select onchange="updateStatus(${i}, this.value)" style="padding:5px;">
+              <option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option>
+              <option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option>
+              <option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option>
+            </select>
+          </div>
+        `;
+      });
+      document.getElementById('admin-order-list').innerHTML = html;
+    }
+    function updateStatus(index, status) {
+      let orders = getLS('orders');
+      orders[index].status = status;
+      setLS('orders', orders);
+    }
+
+    // Helper
+    function deleteItem(key, index, callback) {
+      if(confirm('Delete item?')) {
+        let arr = getLS(key);
+        arr.splice(index, 1);
+        setLS(key, arr);
+        callback();
+      }
+    }
+
+    // Init Admin Views
+    renderProducts();
+    renderCats();
+    renderSliders();
+    loadPayments();
+    renderOrders();
+  </script>
+</body>
+</html>
