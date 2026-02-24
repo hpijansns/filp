@@ -1,0 +1,92 @@
+:root {
+    --primary: #2874f0;
+    --yellow: #ff9f00;
+    --orange: #fb641b;
+    --light-bg: #f1f3f6;
+    --text-dark: #212121;
+    --text-gray: #878787;
+}
+
+body {
+    font-family: Roboto, Arial, sans-serif;
+    margin: 0;
+    background-color: var(--light-bg);
+    color: var(--text-dark);
+    padding-bottom: 60px;
+}
+
+/* Header */
+.main-header {
+    background: var(--primary);
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.logo { color: white; font-weight: bold; font-style: italic; font-size: 20px; }
+.search-container { position: relative; background: white; border-radius: 2px; }
+.search-container input { width: 90%; border: none; padding: 8px 30px; }
+.search-container i { position: absolute; left: 8px; top: 10px; color: var(--text-gray); }
+
+/* Categories */
+.category-strip {
+    display: flex;
+    overflow-x: auto;
+    background: white;
+    padding: 10px 0;
+    gap: 15px;
+    scrollbar-width: none;
+}
+.cat-item {
+    min-width: 70px;
+    text-align: center;
+    font-size: 12px;
+}
+.cat-item img { width: 45px; height: 45px; border-radius: 50%; }
+
+/* Slider */
+.slider {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+    margin: 8px 0;
+}
+.slider img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Product Grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+}
+.product-card {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+}
+.product-card img { width: 100%; height: 150px; object-fit: contain; }
+.price { font-weight: bold; font-size: 16px; }
+.mrp { text-decoration: line-through; color: var(--text-gray); font-size: 12px; }
+.discount { color: #388e3c; font-size: 12px; font-weight: bold; }
+
+/* Admin Panel */
+.admin-section { padding: 15px; background: white; margin-top: 10px; }
+.admin-form input, .admin-form select { width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; }
+.btn-primary { background: var(--orange); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; }
+
+/* Bottom Bars */
+.sticky-bottom {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: white;
+    display: flex;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+.sticky-bottom button { flex: 1; padding: 15px; border: none; font-weight: bold; }
