@@ -1,189 +1,91 @@
-// --- INITIAL DATA SEEDING ---
-const db = {
-    get: (key) => JSON.parse(localStorage.getItem(key)) || [],
-    set: (key, data) => localStorage.setItem(key, JSON.stringify(data))
-};
+// LocalStorage Helpers
+const getLS = (key, def = null) => JSON.parse(localStorage.getItem(key)) || def;
+const setLS = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
-// --- ROUTING ENGINE ---
-function navigateTo(page, id = null) {
-    const container = document.getElementById('app-container');
-    window.scrollTo(0,0);
-    
-    switch(page) {
-        case 'home': renderHome(container); break;
-        case 'product': renderProduct(container, id); break;
-        case 'cart': renderCart(container); break;
-        case 'admin': renderAdmin(container); break;
-        case 'checkout': renderCheckout(container); break;
-        default: renderHome(container);
+// Initialize dummy data if empty
+function initData() {
+  if (!getLS('products')) {
+    setLS('products', [
+      { id: 'p1', title: 'Poco X5 Pro 5G', price: 22999, mrp: 28999, category: 'Mobiles', stock: 10, mainImg: 'https://rukminim2.flixcart.com/image/312/312/xif0q/mobile/4/4/2/x5-pro-5g-mzb0e4lin-poco-original-imagp4m6ztmfxgmz.jpeg', gallery: [], desc: [] },
+      { id: 'p2', title: 'Nike Running Shoes', price: 2499, mrp: 4999, category: 'Fashion', stock: 5, mainImg: 'https://rukminim2.flixcart.com/image/612/612/xif0q/shoe/4/x/q/-original-imaggcawmpyv6b3e.jpeg', gallery: [], desc: [] }
+    ]);
+  }
+  if (!getLS('categories')) {
+    setLS('categories', [
+      { id: 'c1', name: 'Mobiles', img: 'https://rukminim2.flixcart.com/flap/128/128/image/22fddf3c7da4c4f4.png' },
+      { id: 'c2', name: 'Fashion', img: 'https://rukminim2.flixcart.com/fk-p-flap/128/128/image/0d75b34f7d8fbcb3.png' },
+      { id: 'c3', name: 'Electronics', img: 'https://rukminim2.flixcart.com/flap/128/128/image/69c6589653afdb9a.png' },
+      { id: 'c4', name: 'Home', img: 'https://rukminim2.flixcart.com/flap/128/128/image/ab7e2b022a4587dd.jpg' }
+    ]);
+  }
+  if (!getLS('sliderImages')) {
+    setLS('sliderImages', [
+      { id: 's1', url: 'https://rukminim2.flixcart.com/fk-p-flap/1600/270/image/1e1e91307ed8479e.jpg' },
+      { id: 's2', url: 'https://rukminim2.flixcart.com/fk-p-flap/1600/270/image/22421cce8a36ed71.jpg' }
+    ]);
+  }
+  if (!getLS('cart')) setLS('cart', []);
+  if (!getLS('orders')) setLS('orders', []);
+  if (!getLS('paymentLinks')) setLS('paymentLinks', { gpay: '', phonepe: '', paytm: '' });
+}
+
+// Utilities
+function calcDiscount(mrp, price) {
+  if (!mrp || mrp <= price) return 0;
+  return Math.round(((mrp - price) / mrp) * 100);
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerText = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function imgError(image) {
+  image.onerror = "";
+  image.src = "https://via.placeholder.com/150?text=No+Image";
+  return true;
+}
+
+// Cart Logic
+function addToCart(productId, qty = 1, bypassToast = false) {
+  let cart = getLS('cart');
+  let products = getLS('products');
+  let product = products.find(p => p.id === productId);
+  if (!product) return;
+
+  let existing = cart.find(c => c.productId === productId);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ productId, qty });
+  }
+  setLS('cart', cart);
+  if(!bypassToast) showToast('Added to Cart');
+}
+
+function getCartTotals() {
+  let cart = getLS('cart');
+  let products = getLS('products');
+  let totalMrp = 0;
+  let totalPrice = 0;
+  
+  cart.forEach(item => {
+    let p = products.find(x => x.id === item.productId);
+    if(p) {
+      totalMrp += (Number(p.mrp) || Number(p.price)) * item.qty;
+      totalPrice += Number(p.price) * item.qty;
     }
+  });
+  return { items: cart.length, totalMrp, totalPrice, discount: totalMrp - totalPrice };
 }
 
-// --- VIEW RENDERS ---
-
-function renderHome(container) {
-    const categories = db.get('categories');
-    const products = db.get('products');
-    const sliders = db.get('sliders');
-
-    container.innerHTML = `
-        <div class="category-strip">
-            ${categories.map(c => `
-                <div class="cat-item">
-                    <img src="${c.img}" alt="${c.name}">
-                    <p>${c.name}</p>
-                </div>
-            `).join('')}
-        </div>
-        
-        <div class="slider" id="homeSlider">
-            ${sliders.length ? `<img src="${sliders[0]}" id="slideImg">` : '<div class="p-20">Add sliders in Admin</div>'}
-        </div>
-
-        <div class="product-grid">
-            ${products.map(p => {
-                const disc = Math.round(((p.mrp - p.price) / p.mrp) * 100);
-                return `
-                <div class="product-card" onclick="navigateTo('product', '${p.id}')">
-                    <img src="${p.img}" alt="${p.title}">
-                    <div class="title">${p.title.substring(0,25)}...</div>
-                    <div>
-                        <span class="price">₹${p.price}</span>
-                        <span class="mrp">₹${p.mrp}</span>
-                        <span class="discount">${disc}% off</span>
-                    </div>
-                </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-    startSlider();
-}
-
-function renderProduct(container, id) {
-    const product = db.get('products').find(p => p.id == id);
-    const disc = Math.round(((product.mrp - product.price) / product.mrp) * 100);
-
-    container.innerHTML = `
-        <div class="product-page" style="background:white; padding:15px;">
-            <img src="${product.img}" style="width:100%; height:300px; object-fit:contain;">
-            <h2>${product.title}</h2>
-            <div class="price-row">
-                <span class="price" style="font-size:24px">₹${product.price}</span>
-                <span class="mrp">₹${product.mrp}</span>
-                <span class="discount">${disc}% off</span>
-            </div>
-            <p>${product.desc || 'No description available.'}</p>
-        </div>
-        <div class="sticky-bottom">
-            <button style="background:white;" onclick="addToCart('${product.id}')">ADD TO CART</button>
-            <button style="background:var(--yellow); color:black;" onclick="navigateTo('checkout')">BUY NOW</button>
-        </div>
-    `;
-}
-
-// --- CART LOGIC ---
-function addToCart(id) {
-    let cart = db.get('cart');
-    const products = db.get('products');
-    const item = products.find(p => p.id == id);
-    
-    const existing = cart.find(c => c.id == id);
-    if(existing) existing.qty++;
-    else cart.push({...item, qty: 1});
-    
-    db.set('cart', cart);
-    updateCartCount();
-    showToast();
-}
-
-function updateCartCount() {
-    const cart = db.get('cart');
-    document.getElementById('cartCount').innerText = cart.reduce((acc, curr) => acc + curr.qty, 0);
-}
-
-// --- ADMIN LOGIC ---
-function renderAdmin(container) {
-    container.innerHTML = `
-        <div class="admin-section">
-            <h3>Add Product</h3>
-            <div class="admin-form">
-                <input type="text" id="pTitle" placeholder="Product Title">
-                <input type="number" id="pPrice" placeholder="Selling Price">
-                <input type="number" id="pMrp" placeholder="MRP">
-                <input type="text" id="pImg" placeholder="Image URL">
-                <button class="btn-primary" onclick="saveProduct()">Save Product</button>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h3>Add Category</h3>
-            <div class="admin-form">
-                <input type="text" id="cName" placeholder="Category Name">
-                <input type="text" id="cImg" placeholder="Category Icon URL">
-                <button class="btn-primary" onclick="saveCategory()">Add Category</button>
-            </div>
-        </div>
-        
-        <div class="admin-section">
-            <h3>Add Slider</h3>
-            <input type="text" id="sImg" placeholder="Slider Image URL">
-            <button class="btn-primary" onclick="saveSlider()">Add Slider</button>
-        </div>
-    `;
-}
-
-function saveProduct() {
-    const products = db.get('products');
-    const newP = {
-        id: Date.now(),
-        title: document.getElementById('pTitle').value,
-        price: document.getElementById('pPrice').value,
-        mrp: document.getElementById('pMrp').value,
-        img: document.getElementById('pImg').value
-    };
-    products.push(newP);
-    db.set('products', products);
-    alert('Product Added!');
-}
-
-function saveCategory() {
-    const cats = db.get('categories');
-    cats.push({
-        name: document.getElementById('cName').value,
-        img: document.getElementById('cImg').value
-    });
-    db.set('categories', cats);
-    alert('Category Added!');
-}
-
-function saveSlider() {
-    const sliders = db.get('sliders');
-    sliders.push(document.getElementById('sImg').value);
-    db.set('sliders', sliders);
-    alert('Slider Added!');
-}
-
-// --- HELPERS ---
-function showToast() {
-    const t = document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-function startSlider() {
-    const slides = db.get('sliders');
-    if(slides.length < 2) return;
-    let i = 0;
-    setInterval(() => {
-        i = (i + 1) % slides.length;
-        const el = document.getElementById('slideImg');
-        if(el) el.src = slides[i];
-    }, 3000);
-}
-
-// Initialize
-window.onload = () => {
-    updateCartCount();
-    navigateTo('home');
-};
+// Global Init
+initData();
